@@ -79,7 +79,7 @@ COLOR_CODES = ( { 'none': "",
                   'dark_purple': "\033[1;35m",
                   'dark_cyan': "\033[1;36m",
                   'dark_yellow': "\033[1;33m",
-                  # other colors                  
+                  # other colors
                   'normal': "\x1b[0;37;40m",
                   'title': "\x1b[1;32;40m",
                   'heading': "\x1b[1;35;40m",
@@ -130,7 +130,7 @@ DOW             = ["mo", "tu", "we", "th", "fr", "sa", "su"]
 DOW_MATCH       = r"(" + "|".join (DOW) + ")"
 
 CONTEXT_REGEXP   = re.compile(CONTEXT_CHAR + WORD_MATCH, re.IGNORECASE)
-PROJECT_REGEXP   = re.compile("(?:" + PROJECT_CHAR 
+PROJECT_REGEXP   = re.compile("(?:" + PROJECT_CHAR
                               + "|" + "\\" + PROJECT_ALT + ")" + WORD_MATCH, re.IGNORECASE)
 STATUS_REGEXP    = re.compile(STATUS_CHAR + WORD_MATCH, re.IGNORECASE)
 REFERENCE_REGEXP = re.compile(REFERENCE_CHAR + WORD_MATCH, re.IGNORECASE)
@@ -152,6 +152,11 @@ END_DOW_REGEXP    = re.compile(END_CHAR + DOW_MATCH, re.IGNORECASE)
 #
 class GTD(cmd.Cmd):
     """GTD(cmd.Cmd) class."""
+
+    # Functions named "do_*" become commands accessible from the
+    # interpreter as the "*" part.
+    # To create an alias, merely assign one of the functions an additional
+    # "do_*" name.
 
     def __init__(self):
         cmd.Cmd.__init__(self)
@@ -177,7 +182,7 @@ class GTD(cmd.Cmd):
         """Parse command arguments= num + str."""
 
         num = string = None
-        
+
         # Parse command args
         n = re.search(r"^(?x)(\d+)", args)  # num
         s = re.search(r" +([@!:\+\-\w ]+)$", args)  # string
@@ -190,7 +195,7 @@ class GTD(cmd.Cmd):
 
     def _parse_batch(self, args):  # BB
         """Return search criterion and elemenst to add/change."""
-        
+
         regexp = action = ''
         try:
             regexp, action = args.split(' ', 1)
@@ -253,7 +258,7 @@ class GTD(cmd.Cmd):
                         minutes = int(match[0])
                     else:
                         pass  # invalid time range indicator
-                    
+
                 elif attr == 'recurrence':  # compute full hours
                     if match[1].upper() == 'W':  # weeks
                         hours = int(match[0]) * 7 * 24
@@ -267,7 +272,7 @@ class GTD(cmd.Cmd):
                         pass  # invalid time range indicator
 
                 t[attr] = datetime.timedelta(hours= hours, minutes=minutes)
-        
+
         # Parse dates
         for attr in ['start', 'due', 'end']:
             title = eval(attr.upper() + '_REGEXP').sub('', title)
@@ -301,23 +306,23 @@ class GTD(cmd.Cmd):
         if t.has_key('due') and t.has_key('start'):
             if t['due'] < t['start']:
                 t['due'] = t['start']
-            
+
         # Set the title
         t['title'] = " ".join(title.split())  # remove useless blank chars too
 
         return t
-            
+
     def _dump_line(self, task):
         """Return a formatted line from the given 'task'."""
 
         s = task['title']  # init the line with the title
-            
+
         # Dump GTD attributes
         for attr in ['context', 'project', 'status', 'reference']:
             if task.has_key(attr):
                 for value in task[attr]:
                     s += " " + eval(attr.upper() + '_CHAR') + value
-            
+
         # Dump additional properties
         for attr in ['urgency', 'importance', 'complete']:
             if task.has_key(attr) and task[attr]:
@@ -337,7 +342,7 @@ class GTD(cmd.Cmd):
         for attr in ['start', 'due', 'end']:
             if task.has_key(attr) and task[attr]:
                 s += " " + eval(attr.upper() + '_CHAR') + task[attr].strftime("%Y-%m-%d")
-            
+
         return s
 
     def _disp(self, task):
@@ -351,12 +356,12 @@ class GTD(cmd.Cmd):
         id_str = "%3d:(%f)" % (task['id'], task.priority())
         if self.colorize:  # colorize #id
             id_str = COLOR_CODES['cyan'] + id_str + DEFAULT_COLOR
-        
+
         return "%s %s" % (id_str, self._colorize(task_line))
 
     def _show(self, task):
         """Display details of the given 'task'."""
-        
+
         s = ""
         for attrib in Task.attributes_list[1:]:
             if task.has_key(attrib) and task[attrib]:
@@ -374,11 +379,11 @@ class GTD(cmd.Cmd):
 
     def _add(self, line):
         """Adds task from the given line and returns the new task_id."""
-        
+
         if line:
             # Create the new task
             task = Task()
-            
+
             # Parse input line for GTD and additional attributes
             task.add(**self._parse_line(line))
 
@@ -392,21 +397,21 @@ class GTD(cmd.Cmd):
 
     def _replace(self, idx, line):
         """Replace the task given by its idx by the new line."""
-        
+
         # Frist, we need to find the task
         task = self.todo.find('id', idx)
         if task:
             i = self.todo.index(task)
-            
+
             task = Task()  # create a new task
-            
+
             # Parse input line for GTD and additional attributes
             task.add(**self._parse_line(line))
             task.add(id=idx)
 
             # And, replace it into the to-do list
             self.todo[i] = task
-            
+
             # And, set the start date if none
             self.do_append("%d S:%s" % (idx, datetime.datetime.now().strftime("%Y-%m-%d")))
 
@@ -417,10 +422,10 @@ class GTD(cmd.Cmd):
         # Rk: improved search function that retrieve regexp
         #     over all tasks attributes
 
-        if completed: 
+        if completed:
             todos = [ t for t in self.todo.sort() ]  # first sort by priority
-        else: 
-            todos = [ t for t in self.todo.sort() if t['complete'] < 100 ] 
+        else:
+            todos = [ t for t in self.todo.sort() if t['complete'] < 100 ]
 
         # Then, retrieve the pattern (into full desc tasks)
         expr = re.compile(regexp, re.IGNORECASE)
@@ -439,7 +444,7 @@ class GTD(cmd.Cmd):
 
     def _searchplus(self, regexp):  # BB
         """It searches, and returns the IDs."""
-        
+
         lines = self._search(regexp, quiet=True)
         return [ line['id'] for line in lines ]
 
@@ -468,7 +473,7 @@ class GTD(cmd.Cmd):
         """Return formatted string of a deadline task."""
 
         now = datetime.datetime.now()
-        daystart = datetime.datetime(year=now.year, 
+        daystart = datetime.datetime(year=now.year,
                                      month=now.month,
                                      day=now.day)
         dayend = daystart + datetime.timedelta(days=1)
@@ -511,10 +516,8 @@ class GTD(cmd.Cmd):
         GTD> add My new task. @context p:Project"""
 
         task_id = self._add(line)
-        if task_id: 
+        if task_id:
             print "Task #%d added" % task_id
-
-    do_a = do_add
 
     def do_del(self, id):
         """Delete given task:
@@ -527,46 +530,44 @@ class GTD(cmd.Cmd):
             self.todo.supp(idx)
             print "Task #%d deleted" % idx
 
-    do_rm = do_del
-
-    def do_edit(self, id): 
+    def do_edit(self, id):
         """Interactively edit task given by #id:
         GTD> edit #id
-        GTD edit> My task to edit. @context p:Project""" 
-        
-        try: 
-            import readline 
-        except ImportError: 
-            print "Cannot edit without the 'readline' module!" 
-            return 
-        
-        # Parse command line 
-        idx = self._parse_args(id)[0] 
-        
-        if not idx: 
-            return 
-        
-        task = self.todo.find('id', idx) 
-        if not task: 
-            return 
-        
-        def pre_input_hook(): 
-            readline.insert_text(self._dump_line(task)) 
-            readline.redisplay() 
-        
-            # Unset the hook again 
-            readline.set_pre_input_hook(None) 
-        
-        readline.set_pre_input_hook(pre_input_hook) 
-        
-        line = raw_input("GTD edit> ") 
-        # Remove edited line from history: 
+        GTD edit> My task to edit. @context p:Project"""
+
+        try:
+            import readline
+        except ImportError:
+            print "Cannot edit without the 'readline' module!"
+            return
+
+        # Parse command line
+        idx = self._parse_args(id)[0]
+
+        if not idx:
+            return
+
+        task = self.todo.find('id', idx)
+        if not task:
+            return
+
+        def pre_input_hook():
+            readline.insert_text(self._dump_line(task))
+            readline.redisplay()
+
+            # Unset the hook again
+            readline.set_pre_input_hook(None)
+
+        readline.set_pre_input_hook(pre_input_hook)
+
+        line = raw_input("GTD edit> ")
+        # Remove edited line from history:
         #   oddly, get_history_item is 1-based,
-        #   but remove_history_item is 0-based 
-        readline.remove_history_item(readline.get_current_history_length() - 1) 
+        #   but remove_history_item is 0-based
+        readline.remove_history_item(readline.get_current_history_length() - 1)
         self._replace(idx, line)
         print "Task #%d updated" % idx
-        
+
     def do_close(self, id):
         """Close the given task:
         GTD> close #id"""
@@ -589,9 +590,6 @@ class GTD(cmd.Cmd):
                     task['complete'] = 100
                     print "Task #%d (%s) completed." % (idx, task['title'])
 
-    do_done = do_close
-    do_do = do_close
-
     def do_replace(self, id_line):
         """Replace the entire task by a new one:
         GTD> replace #id My new task. @computer p:Project"""
@@ -603,8 +601,6 @@ class GTD(cmd.Cmd):
             self._replace(idx, line)
             print "Task #%d replaced" % idx
 
-    do_sub = do_replace
-
     def do_extend(self, id_desc):
         """Add more text (description) to task:
         GTD> extend #id Additional description."""
@@ -613,12 +609,10 @@ class GTD(cmd.Cmd):
         idx, desc = self._parse_args(id_desc)
 
         if idx and desc:
-            task = self.todo.find('id', idx) 
-            if task: 
+            task = self.todo.find('id', idx)
+            if task:
                 task['title'] += " " + desc  # TODO: allow to attach additional notes
                 print "Task #%d extended" % idx
-
-    do_notes = do_extend
 
     def do_append(self, id_line):
         """Add new elements to task but leave existing elements unchanged:
@@ -626,14 +620,14 @@ class GTD(cmd.Cmd):
 
         # Parse command line
         idx, line = self._parse_args(id_line)
-        
+
         if idx and line:
             # Frist, we need to find the task
             task = self.todo.find('id', idx)
             if task:
                 # Parse additional input line
                 attrs = self._parse_line(line)
-            
+
                 # Then, modify the task
                 task_modified = False
                 for attr, value in attrs.items():
@@ -643,14 +637,12 @@ class GTD(cmd.Cmd):
                 if task_modified:
                     print "Task #%d appended" % idx
 
-    do_addto = do_append
-
     def do_appendall(self, args):  # BB
         """Add new elements to several tasks but leaves other elements unchanged:
         GTD> appendall regexp @newcontext p:NewProject"""
 
         regexp, action = self._parse_batch(args)
-        
+
         tasks = self._searchplus(regexp)
         for taskid in tasks:
             self.do_append('%d %s' % (taskid, action))
@@ -668,7 +660,7 @@ class GTD(cmd.Cmd):
             if task:
                 # Parse additional input line
                 attrs = self._parse_line(line)
-            
+
                 # Then, modify the task
                 task_modified = False
                 for attr, value in attrs.items():
@@ -682,14 +674,12 @@ class GTD(cmd.Cmd):
         else:
             print "Please specify the id of the task to modify first."
 
-    do_mod = do_modify
-
     def do_modifyall(self, args):  # BB
         """Add/change elements of several tasks but leave each other unchanged:
         GTD> modifyall regexp @othercontext p:UpdtProject"""
 
         regexp, action = self._parse_batch(args)
-        
+
         tasks = self._searchplus(regexp)
         for taskid in tasks:
             self.do_modify('%d %s' % (taskid, action))
@@ -708,8 +698,6 @@ class GTD(cmd.Cmd):
         if idx:
             self.do_modify("%d %s" % (idx, "!someday"))
 
-    do_maybe = do_someday
-        
     def do_waitingfor(self, id):
         """Mark the given task as !waitingfor:
         GTD> waitingfor #id"""
@@ -722,7 +710,7 @@ class GTD(cmd.Cmd):
 
     def do_ref(self, id_ref):
         """Archive the given task as Reference:
-        GTD> ref #id refname 
+        GTD> ref #id refname
         """
 
         # Parse command line
@@ -745,8 +733,6 @@ class GTD(cmd.Cmd):
         if idx and level and re.match(DIGIT_MATCH, level):
             self.do_modify("%d U:%d" % (idx, int(level)))
 
-    do_u = do_urgency
-
     def do_importance(self, id_level):
         """Set the Importance (5=crucial,4=high,3=normal,2=low,1=someday):
         GTD> importance #id lvl"""
@@ -757,8 +743,6 @@ class GTD(cmd.Cmd):
         if idx and level and re.match(DIGIT_MATCH, level):
             self.do_modify("%d I:%d" % (idx, int(level)))
 
-    do_i = do_importance
-
     def do_complete(self, id_percent):
         """Set the percent complete:
         GTD> complete #id percentage"""
@@ -768,8 +752,6 @@ class GTD(cmd.Cmd):
 
         if idx and percent and re.match(NUMBER_MATCH, percent):
             self.do_modify("%d C:%d" % (idx, int(percent)))
-
-    do_c = do_complete
 
     def do_time(self, id_time):
         """Set the Time requiered to accomplish the task (in Weeks, Days, Hours or Minutes):
@@ -790,9 +772,6 @@ class GTD(cmd.Cmd):
 
         if idx and recurrence and re.match(TIMEDELTA_MATCH, recurrence):
             self.do_modify("%d R:%s" % (idx, recurrence))
-
-    do_recurs = do_recurrence
-    do_rec = do_recurrence
 
     def do_start(self, id_date):
         """Set the Start / creation date:
@@ -820,7 +799,7 @@ class GTD(cmd.Cmd):
 
         # Parse command line
         idx, days_offset = self._parse_args(id_doff)
-        
+
         if idx and days_offset:
             # Compute the new date= now + days_offset
             now = datetime.datetime.now()
@@ -861,8 +840,6 @@ class GTD(cmd.Cmd):
         if len(tasks) > 10:
             print "%d tasks found" % len(tasks)
 
-    do_la = do_listall
-
     def do_list(self, nb):
         """List #nb open tasks (ordered by #id):
         GTD> list [#nb]"""
@@ -880,8 +857,6 @@ class GTD(cmd.Cmd):
         # Show number of tasks as result of search if more than 10
         if len(tasks) > 10:
             print "%d tasks found" % len(tasks)
-
-    do_ls = do_list
 
     def do_listinbox(self, nb):
         """List #nb quick added tasks (i.e. without context; ordered by #id):
@@ -901,8 +876,6 @@ class GTD(cmd.Cmd):
         if len(tasks) > 10:
             print "%d inbox tasks found" % len(tasks)
 
-    do_li = do_listinbox
-
     def do_listref(self, nb):
         """List #nb ref tasks (ordered by #id):
         GTD> listref [#nb]"""
@@ -921,8 +894,6 @@ class GTD(cmd.Cmd):
         if len(tasks) > 10:
             print "%d references found" % len(tasks)
 
-    do_lr = do_listref
-
     def do_show(self, id):
         """Show details of the given task:
         GTD> show #id"""
@@ -935,9 +906,6 @@ class GTD(cmd.Cmd):
             task = self.todo.find('id', idx)
             if task:
                 print self._show(task)
-
-    do_view = do_show
-    do_v = do_show
 
     def do_sort(self, nb):
         """Sort #nb tasks by priority (appear only after start date):
@@ -984,19 +952,17 @@ class GTD(cmd.Cmd):
                 if t['due'] <= today:
                     print self._disp(t)
             else:
-                print self._disp(t) 
+                print self._disp(t)
 
         # Show number of tasks as result of search if more than 10
         if len(tasks) > 10:
             print "%d today tasks found" % len(tasks)
 
-    do_now = do_today
-            
     def do_listpri(self, regexp):
         """Sort tasks matching given regexp (appear only after start date):
         GTD> listpri [regexp]"""
 
-        todos = [ t for t in self.todo.sort() if t['complete'] < 100 ] 
+        todos = [ t for t in self.todo.sort() if t['complete'] < 100 ]
 
         # Appear only after start date
         today = datetime.datetime.now()
@@ -1008,12 +974,10 @@ class GTD(cmd.Cmd):
 
         for t in tasks:
             print self._disp(t)
-    
+
         # Show number of tasks as result of search if more than 10
         if len(tasks) > 10:
             print "%d tasks found" % len(tasks)
-
-    do_lp = do_listpri
 
     def do_order(self, nb_attr):
         """Order #nb tasks by context/project/status/reference and priority
@@ -1022,7 +986,7 @@ class GTD(cmd.Cmd):
 
         # Parse command line
         nb, attr = self._parse_args(nb_attr)
-        
+
         if not attr or attr not in ['context', 'project', 'status', 'reference']:
             attr = 'context'  # by default order by context
 
@@ -1030,7 +994,7 @@ class GTD(cmd.Cmd):
             if attr == 'reference':
                 tasks = [ t for t in ts ]  # even if completed!
             else:
-                tasks = [ t for t in ts if t['complete'] < 100 ] 
+                tasks = [ t for t in ts if t['complete'] < 100 ]
 
             if not tasks: continue  # empty!
 
@@ -1049,32 +1013,28 @@ class GTD(cmd.Cmd):
             if len(tasks) > 10:
                 print "%d tasks found" % len(tasks)
 
-    do_o = do_order
-
     def do_status(self, line):
         """Display projects statuses (percent complete):
         GTD> status"""
 
         for p, ts in self.todo.order('project').items():
             # Thomas: don't show completed projects
-            
+
             percent = 0  # compute project's percent complete
             next = ""
             for t in ts:
                 if t['complete']:
                     percent += int(t['complete'])
-                # Thomas: find next action 
-                if t['status'] and not t['complete'] and 'next' in t['status']: 
-                    next = " !next: %s" % t['title'] 
+                # Thomas: find next action
+                if t['status'] and not t['complete'] and 'next' in t['status']:
+                    next = " !next: %s" % t['title']
 
-            percent /= len(ts) 
-            if percent == 100: continue 
+            percent /= len(ts)
+            if percent == 100: continue
 
-            # Section title 
-            print self._colorize(PROJECT_CHAR + p.capitalize()), 
+            # Section title
+            print self._colorize(PROJECT_CHAR + p.capitalize()),
             print "%d%%%s" % (percent, self._colorize(next))
-                            
-    do_summary = do_status
 
     def do_contexts(self, line):
         """Display contexts and next task for each context:
@@ -1090,14 +1050,14 @@ class GTD(cmd.Cmd):
                 if t['complete'] != 100:
                     print "->", t['title']
                     count += 1
-                if not next and t['status'] and 'Next' in t['status'] and t['complete'] != 100: 
+                if not next and t['status'] and 'Next' in t['status'] and t['complete'] != 100:
                     next = t
 
-            percent /= len(tasks) 
-            if percent == 100: continue 
+            percent /= len(tasks)
+            if percent == 100: continue
 
-            # Section title 
-            print self._colorize(CONTEXT_CHAR + context) + ':', 
+            # Section title
+            print self._colorize(CONTEXT_CHAR + context) + ':',
             print "%d" % count,
             if next:
                 projects = next['project']
@@ -1106,19 +1066,19 @@ class GTD(cmd.Cmd):
                 print self._colorize("!Next: %s" % next['title'])
             else:
                 print
- 
+
     def do_deadlines(self, line):
         """Display upcoming tasks ordered by deadline:
         GTD> deadlines #nb"""
 
         # Parse command line
         nb = self._parse_args(line)[0]
- 
+
         ordered = self._get_deadlines_ordered()
 
         # Keep only upcoming tasks
         now = datetime.datetime.now()
-        daystart = datetime.datetime(year=now.year, 
+        daystart = datetime.datetime(year=now.year,
                                      month=now.month,
                                      day=now.day)
         dayend = daystart + datetime.timedelta(days=1)
@@ -1147,12 +1107,12 @@ class GTD(cmd.Cmd):
 
         # Keep only overdue tasks
         now = datetime.datetime.now()
-        daystart = datetime.datetime(year=now.year, 
+        daystart = datetime.datetime(year=now.year,
                                      month=now.month,
                                      day=now.day)
         dayend = daystart + datetime.timedelta(days=1)
         ordered = [t for t in ordered if t.get('due', None) < dayend]
-    
+
         if nb: ordered = ordered[:nb]  # display only nb tasks
 
         for t in ordered:
@@ -1217,15 +1177,11 @@ class GTD(cmd.Cmd):
 
         self._search(regexp)
 
-    do_s = do_search
-
-    def do_searchall(self, regexp): 
+    def do_searchall(self, regexp):
         """Retrieve tasks matching given regexp, including completed ones:
-        GTD> searchall regexp""" 
-        
+        GTD> searchall regexp"""
+
         self._search(regexp, completed=True)
-        
-    do_sa = do_searchall
 
     #
     # IO functions.
@@ -1254,8 +1210,6 @@ class GTD(cmd.Cmd):
             if err.errno != errno.ENOENT: raise  # raise all others
             print err  # and continue (new file created)
 
-    do_l = do_load
-
     def do_save(self, todotxt):
         """Save to a todotxt file:
         GTD> save [path/to/todo.txt]"""
@@ -1271,9 +1225,6 @@ class GTD(cmd.Cmd):
                 print "%d tasks saved as '%s'" % (len(self.todo), todotxt)
         except IOError, err:
             print err  # and continue
-
-    do_write = do_save
-    do_w = do_save
 
     def do_archive(self, donetxt):
         """Archive completed tasks:
@@ -1341,8 +1292,8 @@ class GTD(cmd.Cmd):
                         print attr_name
                         print "-" * len(attr_name)
                         print
-                        
-                        tasks = [ t for t in ts if t['complete'] < 100 ] 
+
+                        tasks = [ t for t in ts if t['complete'] < 100 ]
                         for t in tasks:  # task details
                             print "-", t['title']
                             try:  # ok, remove from unprinted list
@@ -1372,7 +1323,7 @@ class GTD(cmd.Cmd):
 
         except IOError, err:
             print err  # and continue
-   
+
     #
     # Help/usage.
     #
@@ -1399,12 +1350,10 @@ Options:
     ref:reference
 Type 'help' or '?' for more commands/options."""
 
-    do_langref = do_usage
-         
     #
     # Quit.
     #
-            
+
     def do_EOF(self, line=None):
         """Quit."""
 
@@ -1412,6 +1361,38 @@ Type 'help' or '?' for more commands/options."""
         self.do_save("")  # auto save (default location)
         sys.exit()
 
+    # Place all function aliases here
+    do_a = do_add
+    do_rm = do_del
+    do_ed = do_edit
+    do_done = do_close
+    do_do = do_close
+    do_sub = do_replace
+    do_notes = do_extend
+    do_addto = do_append
+    do_mod = do_modify
+    do_maybe = do_someday
+    do_u = do_urgency
+    do_i = do_importance
+    do_c = do_complete
+    do_recurs = do_recurrence
+    do_rec = do_recurrence
+    do_la = do_listall
+    do_ls = do_list
+    do_li = do_listinbox
+    do_lr = do_listref
+    do_view = do_show
+    do_v = do_show
+    do_now = do_today
+    do_lp = do_listpri
+    do_o = do_order
+    do_summary = do_status
+    do_s = do_search
+    do_sa = do_searchall
+    do_l = do_load
+    do_write = do_save
+    do_w = do_save
+    do_langref = do_usage
     do_quit = do_EOF
     do_exit = do_EOF
     do_q = do_EOF
@@ -1442,7 +1423,7 @@ def main(options, todotxt=TODO_TXT, todoyaml=None):
     except KeyboardInterrupt:  # C^c
         print "bye"
 
-    
+
 #
 # External entry point.
 #
@@ -1452,7 +1433,7 @@ if __name__ == "__main__":
 
     option_list = [
         make_option("-c", "--color",
-                    action="store_true", dest="color", 
+                    action="store_true", dest="color",
                     default=False,
                     help="activate color highlightment"),
         make_option( "-q", "--quiet",
@@ -1460,7 +1441,7 @@ if __name__ == "__main__":
                     help="do not print the copyright message")
         ]
 
-    parser = OptionParser(usage="python -O %prog [options] todo.txt", 
+    parser = OptionParser(usage="python -O %prog [options] todo.txt",
                           version=__version__,
                           description="A primitive Getting Things Done to-do list manager.",
                           option_list=option_list)
@@ -1472,6 +1453,6 @@ if __name__ == "__main__":
         parser.error("missing todo file argument")
     elif len(args) != 1:
         parser.error("incorrect number of arguments")
-        
+
     # Process start here
     main(options, args[0])
